@@ -20,13 +20,41 @@ app.get('/todos', function(req, res) {
 
 // GET /todos/[ID]
 app.get('/todos/:id', function(req, res) {
-	var todo = _.findWhere(todos, {id: parseInt(req.params.id, 10)});
+	var todo = _.find(todos, {id: parseInt(req.params.id, 10)});
 
 	if(todo) {
 		return res.json(todo);
     }
 
 	res.status(404).send();
+});
+
+app.put('/todos/:id', function(req, res) {
+	var todo = _.find(todos, {id: parseInt(req.params.id, 10)});
+	var body = _.pick(req.body,'description','completed');
+	var validProperties = {};
+
+	if(!todo) {
+		return res.status(404).json({"error":"Todo not found with that ID"});
+	}
+
+	if(body.hasOwnProperty('description') && _.isString(body.description) && todo.description.trim().length > 0) {
+		validProperties.description = body.description;
+	}
+	else if(body.hasOwnProperty('description')) {
+		return res.status(400).json({"error":"Property 'description' must be string"});
+	}
+
+	if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+		validProperties.completed = body.completed;
+	}
+	else if(body.hasOwnProperty('completed')) {
+		return res.status(400).json({"error":"Property 'completed' must be boolean"});
+	}
+
+	_.extend(todo, validProperties);
+
+    return res.json(todo);
 });
 
 app.post('/todos', function(req, res) {
