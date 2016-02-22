@@ -1,6 +1,6 @@
 var express = require('express');
 var bodyParser = require('body-parser');
-var _ = require('underscore');
+var _ = require('lodash');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -21,7 +21,7 @@ app.get('/todos', function(req, res) {
 // GET /todos/[ID]
 app.get('/todos/:id', function(req, res) {
 	var todo = _.findWhere(todos, {id: parseInt(req.params.id, 10)});
-	
+
 	if(todo) {
 		return res.json(todo);
     }
@@ -33,11 +33,11 @@ app.post('/todos', function(req, res) {
 	var todo = _.pick(req.body,'description','completed');
 
 	if(!_.isString(todo.description) || todo.description.trim().length === 0) {
-		return res.status(400).send("Property 'description' required and must be string");
+		return res.status(400).json({"error":"Property 'description' required and must be string"});
 	}
 
 	if(!_.isBoolean(todo.completed)) {
-		return res.status(400).send("Property 'completed' must be boolean");
+		return res.status(400).json({"error":"Property 'completed' must be boolean"});
 	}
 
 	todo.id = todoNextId++;
@@ -51,4 +51,18 @@ app.post('/todos', function(req, res) {
 
 app.listen(PORT, function() {
 	console.log("Express listening on port " + PORT);
+});
+
+app.delete('/todos/:id', function(req, res) {
+	var index = _.findIndex(todos, {id: parseInt(req.params.id, 10)});
+
+	if(!_.isInteger(index) || index === -1) {
+		return res.status(404).json({"error":"Todo not found with that ID"});
+	}
+
+	var todo = todos[index];
+
+	todos.splice(index, 1);
+
+	res.json(todo);
 });

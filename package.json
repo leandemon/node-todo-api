@@ -11,6 +11,6 @@
   "dependencies": {
     "body-parser": "^1.13.3",
     "express": "^4.13.3",
-    "underscore": "^1.8.3"
+    "lodash": "^4.5.0"
   }
 }
