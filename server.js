@@ -18,28 +18,28 @@ app.get('/todos', function(req, res) {
 	var filteredTodos = todos;
 	var filter = {};
 
-	if(req.query.hasOwnProperty('completed')) {
-		if(req.query.completed === 'true' || req.query.completed  === '1') {
+	if (req.query.hasOwnProperty('completed')) {
+		if (req.query.completed === 'true' || req.query.completed === '1') {
 			filter.completed = true;
 		}
-		else if(req.query.completed === 'false' || req.query.completed  === '0') {
+		else if (req.query.completed === 'false' || req.query.completed === '0') {
 			filter.completed = false;
 		}
 	}
 
-	if(req.query.hasOwnProperty('q') && req.query.q.length > 0) {
+	if (req.query.hasOwnProperty('q') && req.query.q.length > 0) {
 		filter.q = req.query.q;
 	}
 
-	if(!_.isEmpty(filter)) {
+	if (!_.isEmpty(filter)) {
 		filteredTodos = _.filter(todos, function(t) {
 			var res = true;
 
-			if(filter.hasOwnProperty('completed')) {
+			if (filter.hasOwnProperty('completed')) {
 				res = (t.completed === filter.completed)
 			}
-			
-			if(filter.hasOwnProperty('q')) {
+
+			if (filter.hasOwnProperty('q')) {
 				res = res && (t.description.toLowerCase().indexOf(filter.q.toLowerCase()) !== -1);
 			}
 
@@ -52,52 +52,66 @@ app.get('/todos', function(req, res) {
 
 // GET /todos/[ID]
 app.get('/todos/:id', function(req, res) {
-	var todo = _.find(todos, {id: parseInt(req.params.id, 10)});
+	var todo = _.find(todos, {
+		id: parseInt(req.params.id, 10)
+	});
 
-	if(todo) {
+	if (todo) {
 		return res.json(todo);
-    }
+	}
 
 	res.status(404).send();
 });
 
 app.put('/todos/:id', function(req, res) {
-	var todo = _.find(todos, {id: parseInt(req.params.id, 10)});
-	var body = _.pick(req.body,'description','completed');
+	var todo = _.find(todos, {
+		id: parseInt(req.params.id, 10)
+	});
+	var body = _.pick(req.body, 'description', 'completed');
 	var validProperties = {};
 
-	if(!todo) {
-		return res.status(404).json({"error":"Todo not found with that ID"});
+	if (!todo) {
+		return res.status(404).json({
+			"error": "Todo not found with that ID"
+		});
 	}
 
-	if(body.hasOwnProperty('description') && _.isString(body.description) && todo.description.trim().length > 0) {
+	if (body.hasOwnProperty('description') && _.isString(body.description) && todo.description.trim().length > 0) {
 		validProperties.description = body.description;
 	}
-	else if(body.hasOwnProperty('description')) {
-		return res.status(400).json({"error":"Property 'description' must be string"});
+	else if (body.hasOwnProperty('description')) {
+		return res.status(400).json({
+			"error": "Property 'description' must be string"
+		});
 	}
 
-	if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
+	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
 		validProperties.completed = body.completed;
 	}
-	else if(body.hasOwnProperty('completed')) {
-		return res.status(400).json({"error":"Property 'completed' must be boolean"});
+	else if (body.hasOwnProperty('completed')) {
+		return res.status(400).json({
+			"error": "Property 'completed' must be boolean"
+		});
 	}
 
 	_.extend(todo, validProperties);
 
-    return res.json(todo);
+	return res.json(todo);
 });
 
 app.post('/todos', function(req, res) {
-	var todo = _.pick(req.body,'description','completed');
+	var todo = _.pick(req.body, 'description', 'completed');
 
-	if(!_.isString(todo.description) || todo.description.trim().length === 0) {
-		return res.status(400).json({"error":"Property 'description' required and must be string"});
+	if (!_.isString(todo.description) || todo.description.trim().length === 0) {
+		return res.status(400).json({
+			"error": "Property 'description' required and must be string"
+		});
 	}
 
-	if(!_.isBoolean(todo.completed)) {
-		return res.status(400).json({"error":"Property 'completed' must be boolean"});
+	if (!_.isBoolean(todo.completed)) {
+		return res.status(400).json({
+			"error": "Property 'completed' must be boolean"
+		});
 	}
 
 	todo.id = todoNextId++;
@@ -112,10 +126,14 @@ app.listen(PORT, function() {
 });
 
 app.delete('/todos/:id', function(req, res) {
-	var index = _.findIndex(todos, {id: parseInt(req.params.id, 10)});
+	var index = _.findIndex(todos, {
+		id: parseInt(req.params.id, 10)
+	});
 
-	if(!_.isInteger(index) || index === -1) {
-		return res.status(404).json({"error":"Todo not found with that ID"});
+	if (!_.isInteger(index) || index === -1) {
+		return res.status(404).json({
+			"error": "Todo not found with that ID"
+		});
 	}
 
 	var todo = todos[index];
