@@ -16,21 +16,38 @@ app.get('/', function(req, res) {
 // GET /todos
 app.get('/todos', function(req, res) {
 	var filteredTodos = todos;
+	var filter = {};
 
 	if(req.query.hasOwnProperty('completed')) {
 		if(req.query.completed === 'true' || req.query.completed  === '1') {
-			filteredTodos = _.filter(todos, {completed: true});
+			filter.completed = true;
 		}
 		else if(req.query.completed === 'false' || req.query.completed  === '0') {
-			filteredTodos = _.filter(todos, {completed: false});
-		}
-		else {
-			filteredTodos = [];
+			filter.completed = false;
 		}
 	}
 
+	if(req.query.hasOwnProperty('q') && req.query.q.length > 0) {
+		filter.q = req.query.q;
+	}
+
+	if(!_.isEmpty(filter)) {
+		filteredTodos = _.filter(todos, function(t) {
+			var res = true;
+
+			if(filter.hasOwnProperty('completed')) {
+				res = (t.completed === filter.completed)
+			}
+			
+			if(filter.hasOwnProperty('q')) {
+				res = res && (t.description.toLowerCase().indexOf(filter.q.toLowerCase()) !== -1);
+			}
+
+			return res;
+		});
+	}
+
 	return res.json(filteredTodos);
-	
 });
 
 // GET /todos/[ID]
@@ -86,8 +103,6 @@ app.post('/todos', function(req, res) {
 	todo.id = todoNextId++;
 	todo.description = todo.description.trim();
 	todos.push(todo);
-
-	console.log('todos',JSON.stringify(todos,null,4));
 
 	res.json(todo);
 });
