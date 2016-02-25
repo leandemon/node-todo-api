@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('lodash');
+var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -100,29 +101,25 @@ app.put('/todos/:id', function(req, res) {
 });
 
 app.post('/todos', function(req, res) {
-	var todo = _.pick(req.body, 'description', 'completed');
+	var body = _.pick(req.body, 'description', 'completed');
 
-	if (!_.isString(todo.description) || todo.description.trim().length === 0) {
+	if (!_.isString(body.description) || body.description.trim().length === 0) {
 		return res.status(400).json({
 			"error": "Property 'description' required and must be string"
 		});
 	}
 
-	if (!_.isBoolean(todo.completed)) {
+	if (!_.isBoolean(body.completed)) {
 		return res.status(400).json({
 			"error": "Property 'completed' must be boolean"
 		});
 	}
 
-	todo.id = todoNextId++;
-	todo.description = todo.description.trim();
-	todos.push(todo);
-
-	res.json(todo);
-});
-
-app.listen(PORT, function() {
-	console.log("Express listening on port " + PORT);
+	db.todo.create(body).then(function(todo) {
+		res.json(todo);
+	}).catch(function(e) {
+		res.status(400).json(e);
+	});
 });
 
 app.delete('/todos/:id', function(req, res) {
@@ -141,4 +138,10 @@ app.delete('/todos/:id', function(req, res) {
 	todos.splice(index, 1);
 
 	res.json(todo);
+});
+
+db.sequelize.sync().then(function() {
+	app.listen(PORT, function() {
+		console.log("Express listening on port " + PORT);
+	});
 });
