@@ -43,7 +43,9 @@ app.get('/todos', function(req, res) {
 
 // GET /todos/[ID]
 app.get('/todos/:id', function(req, res) {
-	db.todo.findById(req.params.id).then(function(todo) {
+	var id = parseInt(req.params.id);
+
+	db.todo.findById(id).then(function(todo) {
 		if (todo) {
 			res.json(todo);
 		}
@@ -102,21 +104,24 @@ app.post('/todos', function(req, res) {
 });
 
 app.delete('/todos/:id', function(req, res) {
-	var index = _.findIndex(todos, {
-		id: parseInt(req.params.id, 10)
+	var id = parseInt(req.params.id);
+
+	db.todo.destroy({
+		where: {
+			id: id
+		}
+	}).then(function(rowsDeleted) {
+		if(rowsDeleted > 0) {
+			res.status(204).send();
+		}
+		else {
+			return res.status(404).json({
+				"error": "Todo not found with that ID"
+			});
+		}
+	}).catch(function(e) {
+		res.status(500).json(e);
 	});
-
-	if (!_.isInteger(index) || index === -1) {
-		return res.status(404).json({
-			"error": "Todo not found with that ID"
-		});
-	}
-
-	var todo = todos[index];
-
-	todos.splice(index, 1);
-
-	res.json(todo);
 });
 
 db.sequelize.sync().then(function() {
