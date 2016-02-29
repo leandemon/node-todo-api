@@ -17,38 +17,28 @@ app.get('/', function(req, res) {
 // GET /todos
 app.get('/todos', function(req, res) {
 	var filteredTodos = todos;
-	var filter = {};
+	var where = {};
 
 	if (req.query.hasOwnProperty('completed')) {
 		if (req.query.completed === 'true' || req.query.completed === '1') {
-			filter.completed = true;
+			where.completed = true;
 		}
 		else if (req.query.completed === 'false' || req.query.completed === '0') {
-			filter.completed = false;
+			where.completed = false;
 		}
 	}
 
 	if (req.query.hasOwnProperty('q') && req.query.q.length > 0) {
-		filter.q = req.query.q;
+		where.description = {
+			$like: '%' + req.query.q + '%'
+		};
 	}
 
-	if (!_.isEmpty(filter)) {
-		filteredTodos = _.filter(todos, function(t) {
-			var res = true;
-
-			if (filter.hasOwnProperty('completed')) {
-				res = (t.completed === filter.completed)
-			}
-
-			if (filter.hasOwnProperty('q')) {
-				res = res && (t.description.toLowerCase().indexOf(filter.q.toLowerCase()) !== -1);
-			}
-
-			return res;
-		});
-	}
-
-	return res.json(filteredTodos);
+	db.todo.findAll({where: where}).then(function(todos) {
+		res.json(todos);
+	}).catch(function(e) {
+		res.status(500).json(e);
+	});
 });
 
 // GET /todos/[ID]
