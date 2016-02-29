@@ -34,7 +34,9 @@ app.get('/todos', function(req, res) {
 		};
 	}
 
-	db.todo.findAll({where: where}).then(function(todos) {
+	db.todo.findAll({
+		where: where
+	}).then(function(todos) {
 		res.json(todos);
 	}).catch(function(e) {
 		res.status(500).json(e);
@@ -58,39 +60,32 @@ app.get('/todos/:id', function(req, res) {
 });
 
 app.put('/todos/:id', function(req, res) {
-	var todo = _.find(todos, {
-		id: parseInt(req.params.id, 10)
-	});
+	var id = parseInt(req.params.id);
 	var body = _.pick(req.body, 'description', 'completed');
-	var validProperties = {};
+	var attributes = {};
 
-	if (!todo) {
-		return res.status(404).json({
-			"error": "Todo not found with that ID"
-		});
+	if (body.hasOwnProperty('description')) {
+		attributes.description = body.description;
 	}
 
-	if (body.hasOwnProperty('description') && _.isString(body.description) && todo.description.trim().length > 0) {
-		validProperties.description = body.description;
-	}
-	else if (body.hasOwnProperty('description')) {
-		return res.status(400).json({
-			"error": "Property 'description' must be string"
-		});
+	if (body.hasOwnProperty('completed')) {
+		attributes.completed = body.completed;
 	}
 
-	if (body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-		validProperties.completed = body.completed;
-	}
-	else if (body.hasOwnProperty('completed')) {
-		return res.status(400).json({
-			"error": "Property 'completed' must be boolean"
-		});
-	}
-
-	_.extend(todo, validProperties);
-
-	return res.json(todo);
+	db.todo.findById(id).then(function(todo) {
+		if (todo) {
+			todo.update(attributes).then(function(todo) {
+				res.json(todo);
+			},function(e) {
+				res.status(400).json(e);
+			})
+		}
+		else {
+			res.status(404).send();
+		}
+	}, function() {
+		res.status(500).send();
+	});
 });
 
 app.post('/todos', function(req, res) {
@@ -111,7 +106,7 @@ app.delete('/todos/:id', function(req, res) {
 			id: id
 		}
 	}).then(function(rowsDeleted) {
-		if(rowsDeleted > 0) {
+		if (rowsDeleted > 0) {
 			res.status(204).send();
 		}
 		else {
