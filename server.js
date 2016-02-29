@@ -53,15 +53,16 @@ app.get('/todos', function(req, res) {
 
 // GET /todos/[ID]
 app.get('/todos/:id', function(req, res) {
-	var todo = _.find(todos, {
-		id: parseInt(req.params.id, 10)
+	db.todo.findById(req.params.id).then(function(todo) {
+		if (todo) {
+			res.json(todo);
+		}
+		else {
+			res.status(404).send();
+		}
+	}).catch(function(e) {
+		res.status(500).json(e);
 	});
-
-	if (todo) {
-		return res.json(todo);
-	}
-
-	res.status(404).send();
 });
 
 app.put('/todos/:id', function(req, res) {
@@ -102,18 +103,6 @@ app.put('/todos/:id', function(req, res) {
 
 app.post('/todos', function(req, res) {
 	var body = _.pick(req.body, 'description', 'completed');
-
-	if (!_.isString(body.description) || body.description.trim().length === 0) {
-		return res.status(400).json({
-			"error": "Property 'description' required and must be string"
-		});
-	}
-
-	if (!_.isBoolean(body.completed)) {
-		return res.status(400).json({
-			"error": "Property 'completed' must be boolean"
-		});
-	}
 
 	db.todo.create(body).then(function(todo) {
 		res.json(todo);
