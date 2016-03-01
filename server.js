@@ -5,8 +5,6 @@ var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
-var todos = [];
-var todoNextId = 1;
 
 app.use(bodyParser.json());
 
@@ -16,7 +14,6 @@ app.get('/', function(req, res) {
 
 // GET /todos
 app.get('/todos', function(req, res) {
-	var filteredTodos = todos;
 	var where = {};
 
 	if (req.query.hasOwnProperty('completed')) {
@@ -72,19 +69,29 @@ app.put('/todos/:id', function(req, res) {
 		attributes.completed = body.completed;
 	}
 
-	db.todo.findById(id).then(function(todo) {
-		if (todo) {
-			todo.update(attributes).then(function(todo) {
-				res.json(todo);
-			},function(e) {
-				res.status(400).json(e);
-			})
+	db.todo.update(attributes, {
+		where: {
+			id: id
+		}
+	}, function(e) {
+		res.status(400).json(e);
+	}).then(function(result) {
+		if(_.isArray(result) && result[0] === 1) {
+			db.todo.findById(id).then(function(todo) {
+				if(todo) {
+					res.json(todo);
+				}
+				else {
+					res.status(404).send();
+				}
+			});
 		}
 		else {
 			res.status(404).send();
 		}
-	}, function() {
-		res.status(500).send();
+		
+	}).catch(function(e) {
+		res.status(400).json(e);
 	});
 });
 
