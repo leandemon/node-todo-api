@@ -132,6 +132,7 @@ app.post('/users', function(req, res) {
 	db.user.create(body).then(function(user) {
 		res.json(user);
 	}).catch(function(e) {
+		console.log("BAD REQUEST", e);
 		res.status(400).json(e);
 	});
 });
