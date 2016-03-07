@@ -1,3 +1,6 @@
+var bcrypt = require('bcryptjs');
+var _ = require('lodash');
+
 module.exports = function(sequelize, DataTypes) {
 	return sequelize.define('user', {
 		email: {
@@ -14,8 +17,11 @@ module.exports = function(sequelize, DataTypes) {
 				}
 			}
 		},
+		password_hash: {
+			type: DataTypes.STRING
+		},
 		password: {
-			type: DataTypes.STRING,
+			type: DataTypes.VIRTUAL,
 			allowNull: false,
 			validate: {
 				len: [7, 100],
@@ -24,6 +30,13 @@ module.exports = function(sequelize, DataTypes) {
 						throw new Error('Password must be a string');
 					}
 				}
+			},
+			set: function(value) {
+				var salt = bcrypt.genSaltSync(10);
+				var hashedPassword = bcrypt.hashSync(value, salt);
+
+				this.setDataValue('password', value);
+				this.setDataValue('password_hash', hashedPassword);
 			}
 		}
 	}, {
@@ -32,6 +45,11 @@ module.exports = function(sequelize, DataTypes) {
 				if(typeof user.email === 'string') {
 					user.email = user.email.toLowerCase();
 				}
+			}
+		},
+		instanceMethods: {
+			toPublicJSON: function() {
+				return _.omit(this.toJSON(), 'password', 'password_hash');
 			}
 		}
 	});
